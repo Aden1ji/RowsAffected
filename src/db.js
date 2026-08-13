@@ -13,7 +13,7 @@ const { Client } = pg;
  * Supabase's transaction pooler where session state does not persist between
  * statements.
  */
-export async function runScan({ connectionString, ssl, sql, includeSystem }) {
+export async function runScan({ connectionString, ssl, queries, includeSystem }) {
   const client = new Client({
     connectionString,
     ssl: resolveSsl(connectionString, ssl),
@@ -38,13 +38,27 @@ export async function runScan({ connectionString, ssl, sql, includeSystem }) {
     await client.query("SELECT set_config('rowsaffected.include_system', $1, true)", [
       includeSystem ? 'on' : 'off',
     ]);
-    const result = await client.query(sql);
+    // Every detection query runs inside the one transaction, so all of them see
+    // the same catalog snapshot and the same include_system setting. Rows are
+    // concatenated: each query emits the same 8 columns, so one formatter
+    // handles them all.
+    const rows = [];
+    for (const { name, sql } of queries) {
+      try {
+        const result = await client.query(sql);
+        rows.push(...result.rows);
+      } catch (err) {
+        throw new Error(`${name} query failed: ${err.message}`);
+      }
+    }
     await client.query('COMMIT');
     inTransaction = false;
-    return result.rows;
+    return rows;
   } catch (err) {
     if (inTransaction) await client.query('ROLLBACK').catch(() => {});
-    throw new Error(`scan query failed: ${err.message}`);
+    throw err instanceof Error && / query failed: /.test(err.message)
+      ? err
+      : new Error(`scan failed: ${err.message}`);
   } finally {
     await client.end().catch(() => {});
   }
