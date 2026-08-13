@@ -1,0 +1,39 @@
+{
+  "name": "rowsaffected",
+  "version": "0.1.0",
+  "description": "Detects silent write failures in Postgres/Supabase apps — writes that report success but affect zero rows because RLS policies don't cover that role+command.",
+  "keywords": [
+    "postgres",
+    "postgresql",
+    "supabase",
+    "rls",
+    "row-level-security",
+    "security",
+    "audit",
+    "cli"
+  ],
+  "homepage": "https://github.com/Aden1ji/RowsAffected#readme",
+  "bugs": "https://github.com/Aden1ji/RowsAffected/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Aden1ji/RowsAffected.git"
+  },
+  "license": "MIT",
+  "author": "Ayo (https://github.com/Aden1ji)",
+  "type": "module",
+  "bin": {
+    "rowsaffected": "bin/rowsaffected.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "pg": "^8.23.0"
+  }
+}
